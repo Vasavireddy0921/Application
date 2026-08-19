@@ -1,0 +1,47 @@
+name: CI-CD-Blob-Demo1
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  build_test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Build artifact
+        run: |
+          mkdir -p dist
+          echo "Artifact created at $(date)" > dist/app.txt
+      - name: Test
+        run: echo "Tests passed"
+
+- name: Upload Build Artifact
+  uses: actions/upload-artifact@v4
+  with:
+    name: build-artifact
+    path: dist/
+
+release:
+needs: build_test
+runs-on: ubuntu-latest
+
+steps:
+  - name: Download Build Artifact
+    uses: actions/download-artifact@v4
+    with:
+      name: build-artifact
+      path: dist/
+
+  - name: Upload to Azure Blob Storage
+    uses: azure/cli@v2
+    with:
+      inlineScript: |
+        az storage blob upload \
+          --connection-string "${{ secrets.AZURE_STORAGE_CONNECTION_STRING }}" \
+          --container-name buildstorage \
+          --file dist/app.txt \
+          --name app-${{ github.run_number }}.txt \
