@@ -1,3 +1,0 @@
-This is fileB
-this is a change in fileb
-This is new repository change
